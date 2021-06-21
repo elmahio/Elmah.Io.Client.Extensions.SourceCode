@@ -17,7 +17,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
     /// <summary>
     /// .
     /// </summary>
-    public static class CreateMessageExtensions
+    public static class SourceCodeFromPdbExtensions
     {
         // Magic string??! Documentation is here: https://github.com/dotnet/corefx/blob/master/src/System.Reflection.Metadata/specs/PortablePdb-Metadata.md#embedded-source-c-and-vb-compilers
         private static readonly Guid EmbeddedSource = new Guid("0E8A571B-6926-466E-B4AD-8AB04611F5FE");

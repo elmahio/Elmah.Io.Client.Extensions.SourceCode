@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Elmah.Io.Client.Extensions.SourceCode.Sample
+namespace Elmah.Io.Client.Extensions.SourceCode.PdbSample
 {
     class Program
     {
@@ -14,7 +14,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Sample
             }
             catch (Exception e)
             {
-                elmahIoClient.Messages.Error(new Guid("b4cb36a9-a272-45e8-8ca6-a48e1728a8d5"), e, e.Message);
+                elmahIoClient.Messages.Error(new Guid("LOG_ID"), e, e.Message);
             }
         }
     }
