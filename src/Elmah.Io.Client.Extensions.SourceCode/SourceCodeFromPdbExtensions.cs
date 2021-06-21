@@ -15,7 +15,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
     // https://github.com/SiamAbdullah/ExtractSourceCodeFromPortablePDB by https://github.com/SiamAbdullah
 
     /// <summary>
-    /// .
+    /// This class contain extension methods for getting source code from a PDB file.
     /// </summary>
     public static class SourceCodeFromPdbExtensions
     {

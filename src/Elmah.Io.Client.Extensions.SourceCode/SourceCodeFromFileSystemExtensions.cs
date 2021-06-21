@@ -7,14 +7,10 @@ using System.Text;
 namespace Elmah.Io.Client.Extensions.SourceCode
 {
     /// <summary>
-    /// .
+    /// This class contain extension methods for getting source code from the file system.
     /// </summary>
     public static class SourceCodeFromFileSystemExtensions
     {
-        // Magic string??! Documentation is here: https://github.com/dotnet/corefx/blob/master/src/System.Reflection.Metadata/specs/PortablePdb-Metadata.md#embedded-source-c-and-vb-compilers
-        private static readonly Guid EmbeddedSource = new Guid("0E8A571B-6926-466E-B4AD-8AB04611F5FE");
-
-        private static readonly Encoding DefaultEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
         private static readonly Dictionary<string, string> sourceCodeCache = new Dictionary<string, string>();
 
         /// <summary>
