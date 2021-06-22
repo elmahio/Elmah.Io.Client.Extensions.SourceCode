@@ -79,8 +79,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                         var sourceSection = sb.ToString();
                         if (!string.IsNullOrWhiteSpace(sourceSection))
                         {
-                            (message.Data ?? (message.Data = new List<Item>())).Add(new Item("SourceCode", sourceSection));
-                            return message;
+                            message.Source = sourceSection;
                         }
                     }
                 }
