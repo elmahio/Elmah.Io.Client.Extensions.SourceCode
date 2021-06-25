@@ -161,7 +161,9 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                         var sourceSection = sb.ToString();
                         if (!string.IsNullOrWhiteSpace(sourceSection))
                         {
-                            message.Source = sourceSection;
+                            message.Code = sourceSection;
+                            if (message.Data == null) message.Data = new List<Item>();
+                            message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1 + start}"));
                         }
                     }
                 }
