@@ -1,0 +1,28 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    - name: Pack
+      run: dotnet pack --configuration Release src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj /p:Version=4.0.${{ github.run_number }}-pre
+    - name: Push
+      run: dotnet nuget push src/Elmah.Io.Client.Extensions.SourceCode/bin/Release/Elmah.Io.Client.Extensions.SourceCode.4.0.${{ github.run_number }}-pre.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      if: ${{ github.event_name == 'push' }}
