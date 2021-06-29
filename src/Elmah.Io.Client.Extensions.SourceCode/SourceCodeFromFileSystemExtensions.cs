@@ -67,16 +67,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                         // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
                         var start = lineInSource >= 10 ? lineInSource - 10 : 0;
 
-                        var sb = new StringBuilder();
-
-                        var currentLineNumber = start;
-                        foreach (var line in lines.Skip(start).Take(21))
-                        {
-                            sb.Append(line).AppendLine(currentLineNumber == lineInSource ? " // <-- An error is thrown in this line" : string.Empty);
-                            currentLineNumber++;
-                        }
-
-                        var sourceSection = sb.ToString();
+                        var sourceSection = string.Join(Environment.NewLine, lines.Skip(start).Take(21));
                         if (!string.IsNullOrWhiteSpace(sourceSection))
                         {
                             message.Code = sourceSection;
