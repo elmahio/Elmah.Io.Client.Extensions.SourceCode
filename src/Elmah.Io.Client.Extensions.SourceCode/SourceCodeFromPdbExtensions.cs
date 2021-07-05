@@ -5,14 +5,16 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace Elmah.Io.Client.Extensions.SourceCode
 {
     // This class borrows code from a range of GitHub repositories either not awailable as NuGet packages or as packages that requires
-    // a lot of dependencies that we don't want to include as part of this package. Here are some sources:
+    // a lot of dependencies that we don't want to include as part of this package. Here are the sources:
     // https://github.com/atifaziz/StackTraceParser by https://github.com/atifaziz
     // https://github.com/SiamAbdullah/ExtractSourceCodeFromPortablePDB by https://github.com/SiamAbdullah
+    // https://github.com/ctaggart/SourceLink by https://github.com/ctaggart
 
     /// <summary>
     /// This class contain extension methods for getting source code from a PDB file.
@@ -39,124 +41,118 @@ namespace Elmah.Io.Client.Extensions.SourceCode
             {
                 var stackTrace = StackTraceParser.Parse(
                     message.Detail,
-                    (f, t, m, pl, ps, fn, ln) => new
+                    (f, t, m, pl, ps, fn, ln) => new StackFrame
                     {
-                        Frame = f,
                         Type = t,
-                        Method = m,
-                        ParameterList = pl,
-                        Parameters = ps,
                         File = fn,
                         Line = int.TryParse(ln, out int line) ? line : 0,
                     });
 
                 var firstFrame = stackTrace.FirstOrDefault(st => !string.IsNullOrWhiteSpace(st.File) && st.Line > 0);
-                if (firstFrame != null)
+                if (firstFrame == null) return message;
+
+                string sourceCode = null;
+                var lineNumber = firstFrame.Line;
+                if (sourceCodeCache.ContainsKey(firstFrame.File))
                 {
-                    string sourceCode = null;
-                    var lineNumber = firstFrame.Line;
-                    if (sourceCodeCache.ContainsKey(firstFrame.File))
+                    sourceCode = sourceCodeCache[firstFrame.File];
+                }
+                else
+                {
+                    Assembly assembly = GetAseembly(firstFrame);
+                    if (assembly == null) return message;
+
+                    var fileInfo = new FileInfo(assembly.Location);
+                    if (fileInfo.Extension != ".dll" && fileInfo.Extension != ".exe") return message;
+
+                    var directory = fileInfo.Directory.FullName;
+                    var file = fileInfo.Name;
+                    var fullPdbPath = Path.Combine(directory, Path.ChangeExtension(file, "pdb"));
+
+                    var usePdb = File.Exists(fullPdbPath);
+
+                    var filename = usePdb ? fullPdbPath : fileInfo.FullName;
+
+                    using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        sourceCode = sourceCodeCache[firstFrame.File];
-                    }
-                    else
-                    {
-                        Assembly assembly = null;
-                        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.FullName.StartsWith("System.", StringComparison.InvariantCultureIgnoreCase)))
+                        var meta = usePdb
+                            ? GetMetadataReaderProviderFromPdbFile(fs)
+                            : GetMetadataReaderProviderFromEmbeddedPdb(fs);
+
+                        if (meta == null) return message;
+
+                        var reader = meta.GetMetadataReader();
+
+                        foreach (var document in reader.Documents)
                         {
-                            var type = a.GetType(firstFrame.Type, false, true);
-                            if (type != null)
+                            var content = reader.GetDocument(document);
+                            var embeddedSourceFileName = reader.GetString(content.Name);
+                            if (firstFrame.File != embeddedSourceFileName) continue;
+
+                            byte[] bytes;
+                            bytes = (from handle in reader.GetCustomDebugInformation(document)
+                                            let cdi = reader.GetCustomDebugInformation(handle)
+                                            where reader.GetGuid(cdi.Kind) == EmbeddedSource
+                                            select reader.GetBlobBytes(cdi.Value)).SingleOrDefault();
+                            if (bytes == null) continue;
+
+                            int uncompressedSize = BitConverter.ToInt32(bytes, 0);
+                            var stream = new MemoryStream(bytes, sizeof(int), bytes.Length - sizeof(int));
+
+                            if (uncompressedSize != 0)
                             {
-                                assembly = a;
-                                break;
-                            }
-                        }
+                                var decompressed = new MemoryStream(uncompressedSize);
 
-                        if (assembly == null) return message;
+                                using (var deflater = new DeflateStream(stream, CompressionMode.Decompress))
+                                {
+                                    deflater.CopyTo(decompressed);
+                                }
 
-                        var fileInfo = new FileInfo(assembly.Location);
-                        if (fileInfo.Extension != ".dll" && fileInfo.Extension != ".exe") return message;
-                        var directory = fileInfo.Directory.FullName;
-                        var file = fileInfo.Name;
-                        var fullPdbPath = Path.Combine(directory, Path.ChangeExtension(file, "pdb"));
-                        if (!File.Exists(fullPdbPath)) return message;
-
-                        using (FileStream fs = new FileStream(fullPdbPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                        {
-                            var meta = MetadataReaderProvider.FromMetadataStream(fs);
-                            var reader = meta.GetMetadataReader();
-                            foreach (var document in reader.Documents)
-                            {
-                                var content = reader.GetDocument(document);
-                                var embeddedSourceFileName = reader.GetString(content.Name);
-                                if (firstFrame.File != embeddedSourceFileName) continue;
-                                byte[] bytes = (from handle in reader.GetCustomDebugInformation(document)
-                                                let cdi = reader.GetCustomDebugInformation(handle)
-                                                where reader.GetGuid(cdi.Kind) == EmbeddedSource
-                                                select reader.GetBlobBytes(cdi.Value)).SingleOrDefault();
-                                if (bytes == null)
+                                if (decompressed.Length != uncompressedSize)
                                 {
                                     return message;
                                 }
 
-                                int uncompressedSize = BitConverter.ToInt32(bytes, 0);
-                                var stream = new MemoryStream(bytes, sizeof(int), bytes.Length - sizeof(int));
+                                stream = decompressed;
+                            }
 
-                                if (uncompressedSize != 0)
+                            using (stream)
+                            {
+                                stream.Position = 0;
+
+                                using (var streamReader = new StreamReader(stream, DefaultEncoding, true))
                                 {
-                                    var decompressed = new MemoryStream(uncompressedSize);
-
-                                    using (var deflater = new DeflateStream(stream, CompressionMode.Decompress))
+                                    sourceCode = streamReader.ReadToEnd();
+                                    if (!string.IsNullOrWhiteSpace(sourceCode))
                                     {
-                                        deflater.CopyTo(decompressed);
-                                    }
-
-                                    if (decompressed.Length != uncompressedSize)
-                                    {
-                                        return message;
-                                    }
-
-                                    stream = decompressed;
-                                }
-
-                                using (stream)
-                                {
-                                    stream.Position = 0;
-
-                                    using (var streamReader = new StreamReader(stream, DefaultEncoding, true))
-                                    {
-                                        sourceCode = streamReader.ReadToEnd();
-                                        if (!string.IsNullOrWhiteSpace(sourceCode))
-                                        {
-                                            sourceCodeCache.Add(firstFrame.File, sourceCode);
-                                            break;
-                                        }
+                                        sourceCodeCache.Add(firstFrame.File, sourceCode);
+                                        break;
                                     }
                                 }
                             }
                         }
                     }
+                }
 
-                    if (!string.IsNullOrWhiteSpace(sourceCode))
+                if (!string.IsNullOrWhiteSpace(sourceCode))
+                {
+                    // Line numbers are 1 indexed. Lines in the source file are 0 indexed
+                    var lineInSource = lineNumber - 1;
+
+                    // It doesn't make sense to carry on if we don't have the line with the error in it
+                    var lines = sourceCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                    if (lines.Length < lineInSource) return message;
+
+                    // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
+                    var start = lineInSource >= 10 ? lineInSource - 10 : 0;
+
+                    var sourceSection = string.Join(Environment.NewLine, lines.Skip(start).Take(21));
+                    if (!string.IsNullOrWhiteSpace(sourceSection))
                     {
-                        // Line numbers are 1 indexed. Lines in the source file are 0 indexed
-                        var lineInSource = lineNumber - 1;
-
-                        // It doesn't make sense to carry on if we don't have the line with the error in it
-                        var lines = sourceCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                        if (lines.Length < lineInSource) return message;
-
-                        // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
-                        var start = lineInSource >= 10 ? lineInSource - 10 : 0;
-
-                        var sourceSection = string.Join(Environment.NewLine, lines.Skip(start).Take(21));
-                        if (!string.IsNullOrWhiteSpace(sourceSection))
-                        {
-                            message.Code = sourceSection;
-                            if (message.Data == null) message.Data = new List<Item>();
-                            message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1 + start}"));
-                            message.Data.Add(new Item("X-ELMAHIO-CODELINE", $"{lineNumber}"));
-                        }
+                        message.Code = sourceSection;
+                        if (message.Data == null) message.Data = new List<Item>();
+                        message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1 + start}"));
+                        message.Data.Add(new Item("X-ELMAHIO-CODELINE", $"{lineNumber}"));
                     }
                 }
             }
@@ -165,6 +161,50 @@ namespace Elmah.Io.Client.Extensions.SourceCode
             }
 
             return message;
+        }
+
+        private static MetadataReaderProvider GetMetadataReaderProviderFromEmbeddedPdb(FileStream fs)
+        {
+            // There's no PDB file. Let's try reading embedded portable PDB.
+            var peReader = new PEReader(fs);
+            if (!peReader.HasMetadata)
+                return null;
+
+            var debugDirectoryEntries = peReader.ReadDebugDirectory();
+            var embeddedPdb = debugDirectoryEntries.Where(dde => dde.Type == DebugDirectoryEntryType.EmbeddedPortablePdb).FirstOrDefault();
+            if (embeddedPdb.Equals(default(DebugDirectoryEntry)))
+                return null;
+
+            return peReader.ReadEmbeddedPortablePdbDebugDirectoryData(embeddedPdb);
+        }
+
+        private static MetadataReaderProvider GetMetadataReaderProviderFromPdbFile(FileStream fs)
+        {
+            // There's a PDB file. Let's use that.
+            return MetadataReaderProvider.FromMetadataStream(fs);
+        }
+
+        private static Assembly GetAseembly(StackFrame firstFrame)
+        {
+            Assembly assembly = null;
+            foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.FullName.StartsWith("System.", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var type = a.GetType(firstFrame.Type, false, true);
+                if (type != null)
+                {
+                    assembly = a;
+                    break;
+                }
+            }
+
+            return assembly;
+        }
+
+        private class StackFrame
+        {
+            public string File { get; internal set; }
+            public int Line { get; internal set; }
+            public string Type { get; internal set; }
         }
     }
 }

@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\build.yml = .github\workflows\build.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb", "samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj", "{8825C3D4-B9BC-4C32-A8B3-04556594C47B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{CEB7DCC3-FF08-4A5A-B8B8-A01D7E0F3E45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEB7DCC3-FF08-4A5A-B8B8-A01D7E0F3E45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEB7DCC3-FF08-4A5A-B8B8-A01D7E0F3E45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8825C3D4-B9BC-4C32-A8B3-04556594C47B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8825C3D4-B9BC-4C32-A8B3-04556594C47B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8825C3D4-B9BC-4C32-A8B3-04556594C47B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8825C3D4-B9BC-4C32-A8B3-04556594C47B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +50,7 @@ Global
 		{82F3FD92-2FB5-4614-849E-5D1E536F1D2D} = {D1272C9F-526F-47AA-9465-B275F818E99C}
 		{38FB0F31-F221-43E7-BD1A-28C83AC4762E} = {46CB3B8A-A664-408F-A1CC-82A02F19E2F2}
 		{CEB7DCC3-FF08-4A5A-B8B8-A01D7E0F3E45} = {46CB3B8A-A664-408F-A1CC-82A02F19E2F2}
+		{8825C3D4-B9BC-4C32-A8B3-04556594C47B} = {46CB3B8A-A664-408F-A1CC-82A02F19E2F2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {99057757-175F-4006-AC5E-4C99C0DFC939}
