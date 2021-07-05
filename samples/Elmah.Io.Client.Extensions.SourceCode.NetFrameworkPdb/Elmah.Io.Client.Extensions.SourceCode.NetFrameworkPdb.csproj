@@ -12,6 +12,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
     <!-- Embedding all sources is required for Elmah.Io.Client.Extensions.SourceCode to fetch source code from the PDB file -->
     <EmbedAllSources>true</EmbedAllSources>
   </PropertyGroup>
