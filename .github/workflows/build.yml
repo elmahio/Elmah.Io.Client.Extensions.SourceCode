@@ -20,7 +20,13 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj
+    - name: Build FileSystem sample
+      run: dotnet build --no-restore .\samples\Elmah.Io.Client.Extensions.SourceCode.FileSystem
+    - name: Build Pdb sample
+      run: dotnet build --no-restore .\samples\Elmah.Io.Client.Extensions.SourceCode.PdbSample
+    - name: Build .NET Framework sample
+      run: msbuild .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Pack
       run: dotnet pack --configuration Release src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj /p:Version=4.0.${{ github.run_number }}-pre
     - name: Push
