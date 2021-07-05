@@ -23,6 +23,8 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj
+    - name: Test
+      run: dotnet test --no-restore --no-build src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj
     - name: Build FileSystem sample
       run: dotnet build --no-restore .\samples\Elmah.Io.Client.Extensions.SourceCode.FileSystem
     - name: Build Pdb sample
