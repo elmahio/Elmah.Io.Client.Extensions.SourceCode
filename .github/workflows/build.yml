@@ -19,6 +19,8 @@ jobs:
         dotnet-version: 5.0.x
     - name: Install dependencies
       run: dotnet restore
+    - name: .NET sample restore
+      run: nuget restore samples/Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb/Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Pack
