@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Elmah.Io.Client.Extensions.SourceCode
 {
@@ -37,49 +36,56 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                         Line = int.TryParse(ln, out int line) ? line : 0,
                     });
 
-                var firstFrame = stackTrace.FirstOrDefault(st => !string.IsNullOrWhiteSpace(st.File) && File.Exists(st.File) && st.Line > 0);
-                if (firstFrame != null)
+                var frames = stackTrace.Where(st => !string.IsNullOrWhiteSpace(st.File) && File.Exists(st.File) && st.Line > 0);
+                if (frames == null || !frames.Any()) return message;
+
+                string sourceCode = null;
+                int? lineNumber = null;
+                foreach (var frame in frames)
                 {
-                    string sourceCode = null;
-                    var lineNumber = firstFrame.Line;
-                    if (sourceCodeCache.ContainsKey(firstFrame.File))
+                    lineNumber = frame.Line;
+                    if (sourceCodeCache.ContainsKey(frame.File))
                     {
-                        sourceCode = sourceCodeCache[firstFrame.File];
+                        sourceCode = sourceCodeCache[frame.File];
+                        break;
                     }
                     else
                     {
-                        sourceCode = File.ReadAllText(firstFrame.File);
+                        sourceCode = File.ReadAllText(frame.File);
                         if (!string.IsNullOrWhiteSpace(sourceCode))
                         {
-                            sourceCodeCache.Add(firstFrame.File, sourceCode);
-                        }
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(sourceCode))
-                    {
-                        // Line numbers are 1 indexed. Lines in the source file are 0 indexed
-                        var lineInSource = lineNumber - 1;
-
-                        // It doesn't make sense to carry on if we don't have the line with the error in it
-                        var lines = sourceCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                        if (lines.Length < lineInSource) return message;
-
-                        // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
-                        var start = lineInSource >= 10 ? lineInSource - 10 : 0;
-
-                        var sourceSection = string.Join(Environment.NewLine, lines.Skip(start).Take(21));
-                        if (!string.IsNullOrWhiteSpace(sourceSection))
-                        {
-                            message.Code = sourceSection;
-                            if (message.Data == null) message.Data = new List<Item>();
-                            message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1+start}"));
-                            message.Data.Add(new Item("X-ELMAHIO-CODELINE", $"{lineNumber}"));
+                            sourceCodeCache.Add(frame.File, sourceCode);
+                            break;
                         }
                     }
                 }
+
+                if (!string.IsNullOrWhiteSpace(sourceCode) && lineNumber.HasValue)
+                {
+                    // Line numbers are 1 indexed. Lines in the source file are 0 indexed
+                    var lineInSource = lineNumber.Value - 1;
+
+                    // It doesn't make sense to carry on if we don't have the line with the error in it
+                    var lines = sourceCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                    if (lines.Length < lineInSource) return message;
+
+                    // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
+                    var start = lineInSource >= 10 ? lineInSource - 10 : 0;
+
+                    var sourceSection = string.Join(Environment.NewLine, lines.Skip(start).Take(21));
+                    if (!string.IsNullOrWhiteSpace(sourceSection))
+                    {
+                        message.Code = sourceSection;
+                        if (message.Data == null) message.Data = new List<Item>();
+                        message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1 + start}"));
+                        message.Data.Add(new Item("X-ELMAHIO-CODELINE", $"{lineNumber}"));
+                    }
+                }
             }
-            catch
+            catch (Exception e)
             {
+                if (message.Data == null) message.Data = new List<Item>();
+                message.Data.Add(new Item("X-ELMAHIO-CODEERROR", e.Message));
             }
 
             return message;
