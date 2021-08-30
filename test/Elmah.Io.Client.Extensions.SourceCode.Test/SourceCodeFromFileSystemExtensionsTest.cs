@@ -51,9 +51,10 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
             Assert.That(msg.Code.Contains("REPLACE_ME\\SourceCodeFromFileSystemExtensionsTest.cs:line 36"));
             Assert.That(msg.Data != null);
-            Assert.That(msg.Data.Count, Is.EqualTo(2));
+            Assert.That(msg.Data.Count, Is.EqualTo(3));
             Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODESTARTLINE").Value, Is.EqualTo("26"));
             Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODELINE").Value, Is.EqualTo("36"));
+            Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODEFILENAME").Value, Is.EqualTo($"{root.FullName}\\SourceCodeFromFileSystemExtensionsTest.cs"));
         }
 
         [Test]
@@ -74,9 +75,10 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
             Assert.That(msg.Code.Contains("REPLACE_ME\\SourceCodeFromFileSystemExtensionsTest.cs:line 36"));
             Assert.That(msg.Data != null);
-            Assert.That(msg.Data.Count, Is.EqualTo(2));
+            Assert.That(msg.Data.Count, Is.EqualTo(3));
             Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODESTARTLINE").Value, Is.EqualTo("26"));
             Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODELINE").Value, Is.EqualTo("36"));
+            Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODEFILENAME").Value, Is.EqualTo($"{root.FullName}\\SourceCodeFromFileSystemExtensionsTest.cs"));
         }
 
         [Test]
@@ -97,9 +99,10 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
             Assert.That(msg.Code.Contains("REPLACE_ME\\SourceCodeFromFileSystemExtensionsTest.cs:line 36"));
             Assert.That(msg.Data != null);
-            Assert.That(msg.Data.Count, Is.EqualTo(2));
+            Assert.That(msg.Data.Count, Is.EqualTo(3));
             Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODESTARTLINE").Value, Is.EqualTo("26"));
             Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODELINE").Value, Is.EqualTo("36"));
+            Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODEFILENAME").Value, Is.EqualTo($"{root.FullName}\\SourceCodeFromFileSystemExtensionsTest.cs"));
         }
 
         [Test]

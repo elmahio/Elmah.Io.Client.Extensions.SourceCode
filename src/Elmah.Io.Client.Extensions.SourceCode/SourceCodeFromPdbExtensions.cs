@@ -53,6 +53,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
 
                 string sourceCode = null;
                 int? lineNumber = null;
+                string codeFilename = null;
 
                 foreach (var frame in frames)
                 {
@@ -60,6 +61,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     if (!string.IsNullOrWhiteSpace(sourceCode)) break;
 
                     lineNumber = frame.Line;
+                    codeFilename = frame.File;
                     if (useCacheIfPossible && sourceCodeCache.ContainsKey(frame.File))
                     {
                         sourceCode = sourceCodeCache[frame.File];
@@ -159,6 +161,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                         if (message.Data == null) message.Data = new List<Item>();
                         message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1 + start}"));
                         message.Data.Add(new Item("X-ELMAHIO-CODELINE", $"{lineNumber}"));
+                        message.Data.Add(new Item("X-ELMAHIO-CODEFILENAME", codeFilename));
                     }
                 }
             }
