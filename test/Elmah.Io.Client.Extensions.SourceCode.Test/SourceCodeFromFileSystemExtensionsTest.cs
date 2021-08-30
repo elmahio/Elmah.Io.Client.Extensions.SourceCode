@@ -43,7 +43,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             };
 
             // Act
-            msg = msg.WithSourceCodeFromFileSystem();
+            msg = msg.WithSourceCodeFromFileSystem(useCacheIfPossible: false);
 
             // Assert
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
@@ -66,7 +66,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             };
 
             // Act
-            msg = msg.WithSourceCodeFromFileSystem();
+            msg = msg.WithSourceCodeFromFileSystem(useCacheIfPossible: false);
 
             // Assert
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
@@ -87,13 +87,13 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             };
 
             // Act
-            msg = msg.WithSourceCodeFromFileSystem();
+            msg = msg.WithSourceCodeFromFileSystem(useCacheIfPossible: false);
 
             // Assert
             Assert.That(msg.Code == null);
             Assert.That(msg.Data == null);
         }
 
-        [Test] public void CanRunOnNull() => Assert.That(new CreateMessage().WithSourceCodeFromFileSystem().Code, Is.Null);
+        [Test] public void CanRunOnNull() => Assert.That(new CreateMessage().WithSourceCodeFromFileSystem(useCacheIfPossible: false).Code, Is.Null);
     }
 }

@@ -43,7 +43,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             };
 
             // Act
-            msg = msg.WithSourceCodeFromPdb();
+            msg = msg.WithSourceCodeFromPdb(useCacheIfPossible: false);
 
             // Assert
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
@@ -66,7 +66,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             };
 
             // Act
-            msg = msg.WithSourceCodeFromPdb();
+            msg = msg.WithSourceCodeFromPdb(useCacheIfPossible: false);
 
             // Assert
             Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
@@ -87,7 +87,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
             };
 
             // Act
-            msg = msg.WithSourceCodeFromPdb();
+            msg = msg.WithSourceCodeFromPdb(useCacheIfPossible: false);
 
             // Assert
             Assert.That(msg.Code == null);
@@ -96,7 +96,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
 
         [Test] public void CanRunOnNull()
         {
-            Assert.That(new CreateMessage().WithSourceCodeFromPdb().Code, Is.Null);
+            Assert.That(new CreateMessage().WithSourceCodeFromPdb(useCacheIfPossible: false).Code, Is.Null);
         }
     }
 }

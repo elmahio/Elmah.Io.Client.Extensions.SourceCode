@@ -16,7 +16,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
         /// Try to pull source code from the file system and include that as part of the log messages. To be able to do that you will need to
         /// have all source files present on the web server with the same absolute path as on the machine building the code.
         /// </summary>
-        public static CreateMessage WithSourceCodeFromFileSystem(this CreateMessage message)
+        public static CreateMessage WithSourceCodeFromFileSystem(this CreateMessage message, bool useCacheIfPossible = true)
         {
             if (message == null) return message;
             if (string.IsNullOrWhiteSpace(message.Detail)) return message;
@@ -44,7 +44,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                 foreach (var frame in frames)
                 {
                     lineNumber = frame.Line;
-                    if (sourceCodeCache.ContainsKey(frame.File))
+                    if (useCacheIfPossible && sourceCodeCache.ContainsKey(frame.File))
                     {
                         sourceCode = sourceCodeCache[frame.File];
                         break;
@@ -54,7 +54,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                         sourceCode = File.ReadAllText(frame.File);
                         if (!string.IsNullOrWhiteSpace(sourceCode))
                         {
-                            sourceCodeCache.Add(frame.File, sourceCode);
+                            sourceCodeCache[frame.File] = sourceCode;
                             break;
                         }
                     }

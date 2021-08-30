@@ -32,7 +32,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
         /// include the following in your .csproj file:<br/><br/>
         /// &lt;EmbedAllSources&gt;true&lt;/EmbedAllSources&gt;<br/>
         /// </summary>
-        public static CreateMessage WithSourceCodeFromPdb(this CreateMessage message)
+        public static CreateMessage WithSourceCodeFromPdb(this CreateMessage message, bool useCacheIfPossible = true)
         {
             if (message == null) return message;
             if (string.IsNullOrWhiteSpace(message.Detail)) return message;
@@ -60,7 +60,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     if (!string.IsNullOrWhiteSpace(sourceCode)) break;
 
                     lineNumber = frame.Line;
-                    if (sourceCodeCache.ContainsKey(frame.File))
+                    if (useCacheIfPossible && sourceCodeCache.ContainsKey(frame.File))
                     {
                         sourceCode = sourceCodeCache[frame.File];
                         break;
@@ -130,7 +130,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                                         sourceCode = streamReader.ReadToEnd();
                                         if (!string.IsNullOrWhiteSpace(sourceCode))
                                         {
-                                            sourceCodeCache.Add(frame.File, sourceCode);
+                                            sourceCodeCache[frame.File] = sourceCode;
                                             break;
                                         }
                                     }
