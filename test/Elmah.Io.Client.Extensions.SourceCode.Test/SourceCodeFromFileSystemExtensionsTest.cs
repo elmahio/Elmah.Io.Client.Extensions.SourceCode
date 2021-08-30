@@ -28,8 +28,33 @@ namespace Elmah.Io.Client.Extensions.SourceCode.Test
    at ConsoleApp53.B.Y()
    at ConsoleApp53.A.X()
    --- End of inner exception stack trace ---
-   at Elmah.Io.Client.Extensions.SourceCode.Test.SourceCodeFromPdbExtensionsTest.CanDecorateMessageWithCode() in REPLACE_ME\SourceCodeFromFileSystemExtensionsTest.cs:line 36
+   at Elmah.Io.Client.Extensions.SourceCode.Test.SourceCodeFromFileSystemExtensionsTest.CanDecorateMessageWithCode() in REPLACE_ME\SourceCodeFromFileSystemExtensionsTest.cs:line 36
    at ConsoleApp53.Program.Main(String[] args) in C:\Users\thoma\source\repos\ConsoleApp53\ConsoleApp53\Program.cs:line 11";
+        internal const string DotNetDelegateStackTrace = @"Elmah.TestException: This is a test exception that can be safely ignored.
+    at Elmah.Io.Client.Extensions.SourceCode.Test.SourceCodeFromFileSystemExtensionsTest.<>c.<<Configure>b__5_1>d.CanDecorateMessageWithCode() in REPLACE_ME\SourceCodeFromFileSystemExtensionsTest.cs:line 36";
+
+        [Test]
+        public void CanDecorateMessageWithCodeFromStackTraceWithDelegate()
+        {
+            // Arrange
+            var path = new FileInfo(Assembly.GetExecutingAssembly().Location);
+            var root = path.Directory.Parent.Parent.Parent;
+            var msg = new CreateMessage
+            {
+                Detail = DotNetDelegateStackTrace.Replace("REPLACE_ME", root.FullName)
+            };
+
+            // Act
+            msg = msg.WithSourceCodeFromFileSystem(useCacheIfPossible: false);
+
+            // Assert
+            Assert.That(!string.IsNullOrWhiteSpace(msg.Code));
+            Assert.That(msg.Code.Contains("REPLACE_ME\\SourceCodeFromFileSystemExtensionsTest.cs:line 36"));
+            Assert.That(msg.Data != null);
+            Assert.That(msg.Data.Count, Is.EqualTo(2));
+            Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODESTARTLINE").Value, Is.EqualTo("26"));
+            Assert.That(msg.Data.First(d => d.Key == "X-ELMAHIO-CODELINE").Value, Is.EqualTo("36"));
+        }
 
         [Test]
         public void CanDecorateMessageWithInnerExceptionWithCode()

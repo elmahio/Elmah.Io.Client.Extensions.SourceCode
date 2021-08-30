@@ -43,7 +43,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     message.Detail,
                     (f, t, m, pl, ps, fn, ln) => new StackFrame
                     {
-                        Type = t,
+                        Type = SimplyfyType(t),
                         File = fn,
                         Line = int.TryParse(ln, out int line) ? line : 0,
                     });
@@ -169,6 +169,15 @@ namespace Elmah.Io.Client.Extensions.SourceCode
             }
 
             return message;
+        }
+
+        private static string SimplyfyType(string t)
+        {
+            if (string.IsNullOrWhiteSpace(t)) return t;
+            var parts = t.Split(new[] { '.' }).Where(part => !part.StartsWith("<"));
+            if (parts.Count() < 1) return t;
+
+            return string.Join(".", parts);
         }
 
         private static MetadataReaderProvider GetMetadataReaderProviderFromEmbeddedPdb(FileStream fs)
