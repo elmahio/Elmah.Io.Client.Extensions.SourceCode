@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <!-- Embedding all sources is required for Elmah.Io.Client.Extensions.SourceCode to fetch source code from the PDB file -->
     <EmbedAllSources>true</EmbedAllSources>
   </PropertyGroup>
