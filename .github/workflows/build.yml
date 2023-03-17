@@ -34,7 +34,7 @@ jobs:
     - name: Build Pdb sample
       run: dotnet build --no-restore .\samples\Elmah.Io.Client.Extensions.SourceCode.PdbSample
     - name: Restore .NET Framework sample
-      run: nuget .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
+      run: nuget restore .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Build .NET Framework sample
       run: msbuild .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Pack
