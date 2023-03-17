@@ -58,10 +58,5 @@
       <Name>Elmah.Io.Client.Extensions.SourceCode</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Elmah.Io.Client">
-      <Version>4.3.43</Version>
-    </PackageReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
