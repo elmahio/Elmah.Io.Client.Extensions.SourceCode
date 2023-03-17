@@ -1,6 +1,4 @@
 ﻿using System;
-using Elmah.Io.Client;
-using Elmah.Io.Client.Extensions.SourceCode;
 
 namespace Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb
 {
