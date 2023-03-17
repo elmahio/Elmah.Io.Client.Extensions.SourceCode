@@ -148,7 +148,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     var lineInSource = lineNumber.Value - 1;
 
                     // It doesn't make sense to carry on if we don't have the line with the error in it
-                    var lines = sourceCode.Split(new[] { Environment.NewLine, "\r", "\n" }, StringSplitOptions.None);
+                    var lines = sourceCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
                     if (lines.Length < lineInSource) return message;
 
                     // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
