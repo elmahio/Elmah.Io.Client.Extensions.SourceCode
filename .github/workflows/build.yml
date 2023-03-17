@@ -20,6 +20,7 @@ jobs:
           3.1.x
           6.0.x
           7.0.x
+    - uses: nuget/setup-nuget@v1
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install dependencies
@@ -32,6 +33,8 @@ jobs:
       run: dotnet build --no-restore .\samples\Elmah.Io.Client.Extensions.SourceCode.FileSystem
     - name: Build Pdb sample
       run: dotnet build --no-restore .\samples\Elmah.Io.Client.Extensions.SourceCode.PdbSample
+    - name: Restore .NET Framework sample
+      run: nuget .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Build .NET Framework sample
       run: msbuild .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Pack
