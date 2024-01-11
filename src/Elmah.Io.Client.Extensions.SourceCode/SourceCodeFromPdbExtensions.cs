@@ -177,8 +177,8 @@ namespace Elmah.Io.Client.Extensions.SourceCode
         private static string SimplyfyType(string t)
         {
             if (string.IsNullOrWhiteSpace(t)) return t;
-            var parts = t.Split(new[] { '.' }).Where(part => !part.StartsWith("<"));
-            if (parts.Count() < 1) return t;
+            var parts = t.Split('.').Where(part => !part.StartsWith("<"));
+            if (!parts.Any()) return t;
 
             return string.Join(".", parts);
         }
@@ -220,7 +220,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
             return assembly;
         }
 
-        private class StackFrame
+        private sealed class StackFrame
         {
             public string File { get; internal set; }
             public int Line { get; internal set; }

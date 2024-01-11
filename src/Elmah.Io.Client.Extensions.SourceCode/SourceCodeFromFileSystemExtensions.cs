@@ -37,7 +37,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     });
 
                 var frames = stackTrace.Where(st => !string.IsNullOrWhiteSpace(st.File) && File.Exists(st.File) && st.Line > 0);
-                if (frames == null || !frames.Any()) return message;
+                if (!frames.Any()) return message;
 
                 string sourceCode = null;
                 int? lineNumber = null;
