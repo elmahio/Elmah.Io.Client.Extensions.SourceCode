@@ -52,11 +52,11 @@ jobs:
     - name: Build .NET Framework sample
       run: msbuild .\samples\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb\Elmah.Io.Client.Extensions.SourceCode.NetFrameworkPdb.csproj
     - name: Pack
-      run: dotnet pack --configuration Release src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj /p:Version=5.1.${{ github.run_number }}-pre
+      run: dotnet pack --configuration Release src/Elmah.Io.Client.Extensions.SourceCode/Elmah.Io.Client.Extensions.SourceCode.csproj /p:Version=5.1.${{ github.run_number }}
     - name: Install dotnet-validate
       run: dotnet tool install --global dotnet-validate --version 0.0.1-preview.304
     - name: Validate
-      run: dotnet-validate package local src/Elmah.Io.Client.Extensions.SourceCode/bin/Release/Elmah.Io.Client.Extensions.SourceCode.5.1.${{ github.run_number }}-pre.nupkg
+      run: dotnet-validate package local src/Elmah.Io.Client.Extensions.SourceCode/bin/Release/Elmah.Io.Client.Extensions.SourceCode.5.1.${{ github.run_number }}.nupkg
     - name: Push
-      run: dotnet nuget push src/Elmah.Io.Client.Extensions.SourceCode/bin/Release/Elmah.Io.Client.Extensions.SourceCode.5.1.${{ github.run_number }}-pre.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      run: dotnet nuget push src/Elmah.Io.Client.Extensions.SourceCode/bin/Release/Elmah.Io.Client.Extensions.SourceCode.5.1.${{ github.run_number }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
       if: ${{ github.event_name == 'push' }}
