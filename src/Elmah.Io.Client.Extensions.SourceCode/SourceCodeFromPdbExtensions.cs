@@ -22,10 +22,10 @@ namespace Elmah.Io.Client.Extensions.SourceCode
     public static class SourceCodeFromPdbExtensions
     {
         // Magic string??! Documentation is here: https://github.com/dotnet/corefx/blob/master/src/System.Reflection.Metadata/specs/PortablePdb-Metadata.md#embedded-source-c-and-vb-compilers
-        private static readonly Guid EmbeddedSource = new Guid("0E8A571B-6926-466E-B4AD-8AB04611F5FE");
+        private static readonly Guid EmbeddedSource = new("0E8A571B-6926-466E-B4AD-8AB04611F5FE");
 
         private static readonly Encoding DefaultEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
-        private static readonly Dictionary<string, string> sourceCodeCache = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> sourceCodeCache = [];
 
         /// <summary>
         /// Try to pull source code from the PDB file and include that as part of the log messages. To be able to do that you will need to
@@ -83,59 +83,55 @@ namespace Elmah.Io.Client.Extensions.SourceCode
 
                         var filename = usePdb ? fullPdbPath : fileInfo.FullName;
 
-                        using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        using var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        var meta = usePdb
+                            ? GetMetadataReaderProviderFromPdbFile(fs)
+                            : GetMetadataReaderProviderFromEmbeddedPdb(fs);
+
+                        if (meta == null) continue;
+
+                        var reader = meta.GetMetadataReader();
+
+                        foreach (var document in reader.Documents)
                         {
-                            var meta = usePdb
-                                ? GetMetadataReaderProviderFromPdbFile(fs)
-                                : GetMetadataReaderProviderFromEmbeddedPdb(fs);
+                            var content = reader.GetDocument(document);
+                            var embeddedSourceFileName = reader.GetString(content.Name);
+                            if (frame.File != embeddedSourceFileName) continue;
 
-                            if (meta == null) continue;
+                            byte[] bytes;
+                            bytes = (from handle in reader.GetCustomDebugInformation(document)
+                                     let cdi = reader.GetCustomDebugInformation(handle)
+                                     where reader.GetGuid(cdi.Kind) == EmbeddedSource
+                                     select reader.GetBlobBytes(cdi.Value)).SingleOrDefault();
+                            if (bytes == null) continue;
 
-                            var reader = meta.GetMetadataReader();
+                            int uncompressedSize = BitConverter.ToInt32(bytes, 0);
+                            var stream = new MemoryStream(bytes, sizeof(int), bytes.Length - sizeof(int));
 
-                            foreach (var document in reader.Documents)
+                            if (uncompressedSize != 0)
                             {
-                                var content = reader.GetDocument(document);
-                                var embeddedSourceFileName = reader.GetString(content.Name);
-                                if (frame.File != embeddedSourceFileName) continue;
+                                var decompressed = new MemoryStream(uncompressedSize);
 
-                                byte[] bytes;
-                                bytes = (from handle in reader.GetCustomDebugInformation(document)
-                                         let cdi = reader.GetCustomDebugInformation(handle)
-                                         where reader.GetGuid(cdi.Kind) == EmbeddedSource
-                                         select reader.GetBlobBytes(cdi.Value)).SingleOrDefault();
-                                if (bytes == null) continue;
-
-                                int uncompressedSize = BitConverter.ToInt32(bytes, 0);
-                                var stream = new MemoryStream(bytes, sizeof(int), bytes.Length - sizeof(int));
-
-                                if (uncompressedSize != 0)
+                                using (var deflater = new DeflateStream(stream, CompressionMode.Decompress))
                                 {
-                                    var decompressed = new MemoryStream(uncompressedSize);
-
-                                    using (var deflater = new DeflateStream(stream, CompressionMode.Decompress))
-                                    {
-                                        deflater.CopyTo(decompressed);
-                                    }
-
-                                    if (decompressed.Length != uncompressedSize) break;
-
-                                    stream = decompressed;
+                                    deflater.CopyTo(decompressed);
                                 }
 
-                                using (stream)
-                                {
-                                    stream.Position = 0;
+                                if (decompressed.Length != uncompressedSize) break;
 
-                                    using (var streamReader = new StreamReader(stream, DefaultEncoding, true))
-                                    {
-                                        sourceCode = streamReader.ReadToEnd();
-                                        if (!string.IsNullOrWhiteSpace(sourceCode))
-                                        {
-                                            sourceCodeCache[frame.File] = sourceCode;
-                                            break;
-                                        }
-                                    }
+                                stream = decompressed;
+                            }
+
+                            using (stream)
+                            {
+                                stream.Position = 0;
+
+                                using var streamReader = new StreamReader(stream, DefaultEncoding, true);
+                                sourceCode = streamReader.ReadToEnd();
+                                if (!string.IsNullOrWhiteSpace(sourceCode))
+                                {
+                                    sourceCodeCache[frame.File] = sourceCode;
+                                    break;
                                 }
                             }
                         }
@@ -148,7 +144,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     var lineInSource = lineNumber.Value - 1;
 
                     // It doesn't make sense to carry on if we don't have the line with the error in it
-                    var lines = sourceCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                    var lines = sourceCode.Split([Environment.NewLine], StringSplitOptions.None);
                     if (lines.Length < lineInSource) return message;
 
                     // Start 10 lines before the line containing the error or with the first line if within the first 10 lines
@@ -158,7 +154,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
                     if (!string.IsNullOrWhiteSpace(sourceSection))
                     {
                         message.Code = sourceSection;
-                        if (message.Data == null) message.Data = new List<Item>();
+                        message.Data ??= [];
                         message.Data.Add(new Item("X-ELMAHIO-CODESTARTLINE", $"{1 + start}"));
                         message.Data.Add(new Item("X-ELMAHIO-CODELINE", $"{lineNumber}"));
                         message.Data.Add(new Item("X-ELMAHIO-CODEFILENAME", codeFilename));
@@ -167,7 +163,7 @@ namespace Elmah.Io.Client.Extensions.SourceCode
             }
             catch (Exception e)
             {
-                if (message.Data == null) message.Data = new List<Item>();
+                message.Data ??= [];
                 message.Data.Add(new Item("X-ELMAHIO-CODEERROR", e.Message));
             }
 
